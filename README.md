@@ -47,6 +47,17 @@ Bugly热更新接入脚本
 之后在
 [Bugly后台](https://bugly.qq.com/v2/workbench/apps)上传补丁,立即下发,即可.
 
+
+### 脚本干了啥?
+针对官方的`tinker-support.gradle`做了一组封装,完全可以摒弃不用.
+提供了一些便利性:
+- [x] 根目录的`build.grale`和模块的`build.grale`统一配置,脚本自动区分
+- [x] 将配置参数, 统一到`bugly_config.gradle`脚本文件入口,方便修改
+- [x] 自动从`build/outputs`目录收集补丁文件到指定目录下, 省去查找消耗
+- [x] 自动标志创建过补丁文件的基准包目录, 防止被误删.
+- [x] 自动清理多次打包`tinker-support.gradle`收集的冗余文件.
+
+
 ### 已验证
 - [x] 单个类修改
 - [x] 新增/修改String资源
@@ -63,9 +74,10 @@ Bugly热更新接入脚本
 1. Debug 时不支持instant run
 2. 补丁的检查会在杀掉进程重启后执行; 补丁的生效, 会在下一次重启.
 3. 当看到log, I/CrashReport: Tinker patch success, result: 表示补丁生效.重启可看到效果
+
 ```groovy
 //补丁更新相关日志
-com.angcyo.buglydemo I/CrashReport: onUpgradeReceived: title:
+com.angcyo.buglydemo I/CrashReport: onUpgradeReceived: title: 
     newFeature: 测试9
     publishTime: 0
     publishType: 0
@@ -79,15 +91,15 @@ com.angcyo.buglydemo I/CrashReport: onUpgradeReceived: title:
         apkId: 0
         channelId: null
         md5: 2e753f98f482b48cc2d218d8fb8237915149a0e0
-        sdkVer:
+        sdkVer: 
         bundleId: null
     }
     apkBaseInfo: {
         apkMd5: 2e753f98f482b48cc2d218d8fb8237915149a0e0
         apkUrl: https://s.beta.gtimg.com/rdmimg/hot_patch/44e2baffd2/226190d8-08d3-4cac-90c0-7ae4561ea6af.zip
-        manifestMd5:
+        manifestMd5: 
         fileSize: 7071
-        signatureMd5:
+        signatureMd5: 
     }
     updateStrategy: 0
     popTimes: 0
@@ -124,16 +136,16 @@ com.angcyo.buglydemo I/Tinker.TinkerPatchService: check if patch service is runn
 com.angcyo.buglydemo W/Tinker.TinkerPatchService: patch service is not running, retry with IntentService.
 com.angcyo.buglydemo I/Tinker.TinkerPatchService: run patch service by intent service.
 com.angcyo.buglydemo I/Tinker.TinkerPatchService: successfully start patch service with IntentService.
-com.angcyo.buglydemo I/Tinker.TinkerResultService: TinkerResultService receive result:
-    PatchResult:
+com.angcyo.buglydemo I/Tinker.TinkerResultService: TinkerResultService receive result: 
+    PatchResult: 
     isSuccess:true
     rawPatchFilePath:/data/user/0/com.angcyo.buglydemo/app_tmpPatch/tmpPatch.apk
     costTime:5513
     patchVersion:f0148dd75d2538d441b138e6f5b75567
 com.angcyo.buglydemo I/Process: Sending signal. PID: 15427 SIG: 9
 com.angcyo.buglydemo W/Tinker.DefaultTinkerResultService: deleteRawPatchFile rawFile path: /data/user/0/com.angcyo.buglydemo/app_tmpPatch/tmpPatch.apk
-com.angcyo.buglydemo I/CrashReport: Tinker patch success, result:
-    PatchResult:
+com.angcyo.buglydemo I/CrashReport: Tinker patch success, result: 
+    PatchResult: 
     isSuccess:true
     rawPatchFilePath:/data/user/0/com.angcyo.buglydemo/app_tmpPatch/tmpPatch.apk
     costTime:5513
