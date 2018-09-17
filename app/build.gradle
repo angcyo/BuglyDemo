@@ -6,9 +6,6 @@ apply plugin: 'kotlin-android-extensions'
 
 apply from: '../bugly/bugly_config.gradle'
 
-//println(ext.buglyVersion)
-//println(ext.tinkerSupport)
-
 android {
     signingConfigs {
         angcyo {
