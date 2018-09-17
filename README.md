@@ -20,7 +20,9 @@ Bugly热更新接入脚本
 #### 3. 在模块目录下的`build.gradle`配置
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/3.png)
 
-#### 4. 当你在打包apk时, 根目录下的`buglyApk`目录会手机基准包和补丁需要的`app-release-R.txt`和`app-release-mapping.txt`文件(如果有)
+到此脚本配置完成, 打包时可以生成带有`tinkerId`的基准包和`app-release-R.txt`和`app-release-mapping.txt`文件(如果有)
+
+#### 4. 当你在打包apk时, 根目录下的`buglyApk`目录会收集基准包和补丁需要的`app-release-R.txt`和`app-release-mapping.txt`文件(如果有)
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/4.png)
 
 #### 5.生成补丁
@@ -43,7 +45,7 @@ Bugly热更新接入脚本
 补丁会出现在`根目录/buglyApk`中, 和`bugly_patch_apk_dir`中.各有一份.
 
 之后在
-[Bugly后台](https://bugly.qq.com/v2/workbench/apps)上传补丁即可.
+[Bugly后台](https://bugly.qq.com/v2/workbench/apps)上传补丁,立即下发,即可.
 
 ### 已验证
 - [x] 单个类修改
@@ -140,3 +142,4 @@ com.angcyo.buglydemo I/Tinker.PatchFileUtil: safeDeleteFile, try to delete path:
 com.angcyo.buglydemo I/Tinker.TinkerResultService: tinker wait screen to restart process
 com.angcyo.buglydemo D/Tinker.DefaultAppLike: onTrimMemory level:5
 ```
+
