@@ -1,0 +1,229 @@
+//Bugly 版本相关信息
+ext {
+    buglyVersion = "1.3.5"
+    buglyNativeVersion = "3.3.1"
+    tinkerLibVersion = "1.9.8"
+    tinkerSupportVersion = "1.1.3"
+
+    //application工程名, 如果是在Library里面引用, 需要手动配置
+    app_module_name = ""
+
+    //基准包备份目录, 相对于 root project
+    bugly_back_path = "buglyApk"
+    //打补丁的基准包目录名, 相对于 bugly_back_path
+    bugly_patch_apk_dir = "app-0917-11-04-53"
+    bugly_patch_apk_name = "App_20180917_V2.0.2_release.apk"
+    //此次补丁id, 需要和生成基准包时的id唯一
+    bugly_patch_id = "bugly-1.12-patch"
+
+    //加固专用
+    bugly_protected = false
+}
+
+/**
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * 已下内容酌情修改
+ * */
+def isRootProject = project == project.getRootProject()
+
+def app_module_name = ext.app_module_name
+if (ext.app_module_name == "" && !isRootProject) {
+    app_module_name = project.getName()
+}
+
+def patch_path = rootDir.getAbsolutePath() + "/" + app_module_name + "/build/outputs/patch/release"
+def patch_file = patch_path + "/patch_signed_7zip.apk"
+
+def bugly_apk_path = rootDir.getAbsolutePath() + "/" + ext.bugly_back_path
+def bugly_patch_id = ext.bugly_patch_id
+def bugly_patch_apk_dir = ext.bugly_patch_apk_dir
+
+//清理之前的补丁包, 和多余的APK备份
+clearPatch(patch_path, bugly_apk_path)
+
+//println '工程:' + project.getDisplayName()
+//println '输出目录:' + buildDir
+
+//root project 和 app project 脚本自动区分执行
+if (isRootProject) {
+    project.getRootProject().buildscript {
+        dependencies {
+            classpath "com.tencent.bugly:tinker-support:$tinkerSupportVersion"
+        }
+    }
+} else {
+    apply from: '../bugly/tinker-support.gradle'
+    android {
+        defaultConfig {
+            ndk {
+                //设置支持的SO库架构
+                abiFilters 'armeabi-v7a' //, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+            }
+        }
+    }
+    dependencies {
+        implementation "com.android.support:multidex:1.0.1" // 多dex配置
+        //注释掉原有bugly的仓库
+        //compile 'com.tencent.bugly:crashreport:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.3.4
+        implementation "com.tencent.bugly:crashreport_upgrade:$buglyVersion"
+        // 指定tinker依赖版本（注：应用升级1.3.5版本起，不再内置tinker）
+        implementation "com.tencent.tinker:tinker-android-lib:$tinkerLibVersion"
+        implementation "com.tencent.bugly:nativecrashreport:$buglyNativeVersion"
+        //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
+    }
+//    tasks.each {
+//        println "each:" + it.name
+//        println '....end'
+//    }
+//    tasks.getByName("assembleRelease") {
+//        it.doLast {
+//        }
+//    }
+    tasks.whenTaskAdded {
+        if (it.name == 'assembleRelease') {
+            it.doLast {
+            }
+        } else if (it.name == 'buildTinkerPatchRelease') {
+            it.doFirst {
+                println "开始编译补丁."
+            }
+            it.doLast {
+                //createFileInLastFolder(bugly_apk_path, bugly_patch_id)
+                copyFile(patch_file, bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id)
+                copyFile(patch_file, bugly_apk_path, bugly_patch_id)
+                createFile(bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id + ".bugly")
+            }
+        }
+    }
+}
+
+/**
+ * 删除之前补丁包
+ * */
+def clearPatch(String patchPath, String apkPath) {
+    File patchDir = new File(patchPath)
+    if (patchDir != null && patchDir.isDirectory()) {
+        def files = patchDir.listFiles()
+        if (files != null) {
+            for (File f : files) {
+                f.delete()
+                println "清理:" + f.getAbsolutePath()
+            }
+        }
+    }
+    deleteApkFolder(apkPath, true)
+}
+
+/**
+ * 收集补丁包
+ * */
+def copyFile(String from, String toPath, String suffix) {
+    InputStream input = null
+    OutputStream output = null
+    try {
+        File source = new File(from)
+        String rawName = source.getName().substring(0, source.getName().indexOf('.'))
+        File dest = new File(toPath + "/" + rawName + "_" + suffix + ".apk")
+        println '复制文件:' + source.getAbsolutePath() + " -> " + dest.getAbsolutePath()
+
+        input = new FileInputStream(source)
+        output = new FileOutputStream(dest)
+        byte[] buf = new byte[1024]
+        int bytesRead
+        while ((bytesRead = input.read(buf)) != -1) {
+            output.write(buf, 0, bytesRead)
+        }
+    } finally {
+        input.close()
+        output.close()
+    }
+}
+
+def createFileInLastFolder(String path, String fileName) {
+    File patchDir = new File(path)
+    if (patchDir != null && patchDir.isDirectory()) {
+        def files = patchDir.listFiles()
+        if (files != null) {
+            println files[0].name
+            println files.sort()[0]
+            println files[0].name
+        }
+    }
+}
+
+static def createFile(String folder, String fileName) {
+    File folderFile = new File(folder)
+    if (!folderFile.exists()) {
+        folderFile.mkdirs()
+    }
+    File file = new File(folder, fileName)
+    if (!file.exists()) {
+        file.createNewFile()
+    }
+}
+
+def deleteApkFolder(String path, boolean isRootPath) {
+    File folder = new File(path)
+    if (folder != null && folder.isDirectory()) {
+        def files = folder.listFiles()
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile()) {
+                    if (!isRootPath) {
+                        f.delete()
+                        println "清理文件:" + f.getAbsolutePath()
+                    }
+                } else if (f.isDirectory()) {
+                    if (ignoreFolder(f.getAbsolutePath())) {
+                        continue
+                    }
+                    deleteApkFolder(f.getAbsolutePath(), false)
+                    f.delete()
+                    println "清理文件夹:" + f.getAbsolutePath()
+                }
+            }
+        }
+    }
+}
+
+def ignoreFolder(String path) {
+    File folder = new File(path)
+    if (folder != null && folder.isDirectory()) {
+        if (folder.getName() == bugly_patch_apk_dir) {
+            return true
+        }
+        def files = folder.listFiles()
+        if (files != null) {
+            def contain = false
+            for (File f : files) {
+                contain = f.getName().contains(".bugly")
+                if (contain) {
+                    break
+                }
+            }
+            return contain
+        }
+    }
+    return false
+}
+
+/*
+*  混淆
+-dontwarn com.tencent.bugly.**
+-keep public class com.tencent.bugly.**{*;}
+-keep class android.support.**{*;}
+-dontwarn com.tencent.tinker.**
+-keep class com.tencent.tinker.** { *; }
+* */
+
+/*
+* 参考
+* https://blog.csdn.net/ytfunnysite/article/details/78814001
+* */
