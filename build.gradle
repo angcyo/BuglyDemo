@@ -17,17 +17,6 @@ buildscript {
     }
 }
 
-//buildscript {
-//    dependencies {
-//        classpath "com.tencent.bugly:tinker-support:1.1.3"
-//    }
-//}
-
-
-//apply from: './bugly/test.gradle'
-//apply from: './bugly/bugly_config.gradle'
-
-
 allprojects {
     repositories {
         google()
