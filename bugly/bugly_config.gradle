@@ -11,10 +11,10 @@ ext {
     //基准包备份目录, 相对于 root project
     bugly_back_path = "buglyApk"
     //打补丁的基准包目录名, 相对于 bugly_back_path
-    bugly_patch_apk_dir = "app-0917-11-04-53"
-    bugly_patch_apk_name = "App_20180917_V2.0.2_release.apk"
+    bugly_patch_apk_dir = "app-0918-10-36-59"
+    bugly_patch_apk_name = "App_20180918_V2.0.2_release.apk"
     //此次补丁id, 需要和生成基准包时的id唯一
-    bugly_patch_id = "bugly-1.12-patch"
+    bugly_patch_id = "bugly-1.13.6-patch"
 
     //加固专用
     bugly_protected = false

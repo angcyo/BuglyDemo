@@ -18,6 +18,9 @@ import com.tencent.tinker.loader.app.DefaultApplicationLike;
  * @date 2018/09/14
  */
 public class App extends DefaultApplicationLike {
+    public static Application application;
+
+
     public App(Application application, int tinkerFlags,
                boolean tinkerLoadVerifyFlag, long applicationStartElapsedTime,
                long applicationStartMillisTime, Intent tinkerResultIntent) {
@@ -30,6 +33,7 @@ public class App extends DefaultApplicationLike {
         super.onCreate();
         // 这里实现SDK初始化，appId替换成你的在Bugly平台申请的appId
         // 调试时，将第三个参数改为true
+        application = getApplication();
         Bugly.init(getApplication(), "xxx", true);
     }
 

@@ -1,17 +1,25 @@
 package com.angcyo.buglydemo
 
 import android.Manifest
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.widget.TextView
+import com.angcyo.sodemo.So
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        findViewById<TextView>(R.id.text_view).text = TestClass.getString()//getString(R.string.text) //"测试文本-2018-9-17"
+        findViewById<TextView>(R.id.text_view).apply {
+            text = So.stringFromJNI()//TestClass.getString()//getString(R.string.text) //"测试文本-2018-9-17"
+            setOnClickListener {
+                val intent = Intent(this@MainActivity, NewActivity::class.java)
+                startActivity(intent)
+            }
+        }
 
         /*
         * 程序无补丁:

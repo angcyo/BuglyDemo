@@ -2,11 +2,13 @@
 Bugly热更新接入脚本
 
 ### 优先阅读
-[Bugly Android热更新使用指南](https://bugly.qq.com/docs/user-guide/instruction-manual-android-hotfix/?v=20180913155123)
+[Bugly Android热更新使用指南](https://bugly.qq.com/docs/user-guide/instruction-manual-android-hotfix/)
 
-[Bugly Android热更新详解](https://bugly.qq.com/docs/user-guide/instruction-manual-android-hotfix-demo/?v=20180709165613)
+[Bugly Android热更新详解](https://bugly.qq.com/docs/user-guide/instruction-manual-android-hotfix-demo/)
 
-[Bugly Android 热更新常见问题](https://bugly.qq.com/docs/user-guide/faq-android-hotfix/?v=20180709165613)
+[Bugly Android 热更新常见问题](https://bugly.qq.com/docs/user-guide/faq-android-hotfix/)
+
+[热更新API接口](https://bugly.qq.com/docs/user-guide/api-hotfix/)
 
 
 ### 使用说明
@@ -66,9 +68,9 @@ Bugly热更新接入脚本
 ### ToDo
 - [ ] 多渠道打包测试
 - [ ] 加固打包测试
-- [ ] 新增四大组件测试
-- [ ] so文件修改测试
-- [ ] 新增类测试
+- [x] 新增四大组件测试 `Activity通过`
+- [x] so文件修改测试 `需要使用Beta.loadLibrary("mylib")`
+- [x] 新增类测试 `Activity, View, 普通类, 通过`
 
 ### 注意 [QA](https://bugly.qq.com/docs/user-guide/faq-android-hotfix/?v=20180709165613)
 1. Debug 时不支持instant run
