@@ -13,6 +13,8 @@ def baseApkDir = "${ext.bugly_patch_apk_dir}"
 def baseApkName = "${ext.bugly_patch_apk_name}"
 def buglyPatchId = "${ext.bugly_patch_id}"
 def buglyProtected = ext.bugly_protected
+def buglyMappingFileName = ext.bugly_mapping_file_name
+def buglyResFileName = ext.bugly_res_file_name
 
 //println bakPath
 //println buglyProtected
@@ -38,10 +40,10 @@ tinkerSupport {
     baseApk = "${bakPath}/${baseApkDir}/${baseApkName}"
 
     // 对应tinker插件applyMapping
-    baseApkProguardMapping = "${bakPath}/${baseApkDir}/app-release-mapping.txt"
+    baseApkProguardMapping = "${bakPath}/${baseApkDir}/${buglyMappingFileName}"
 
     // 对应tinker插件applyResourceMapping
-    baseApkResourceMapping = "${bakPath}/${baseApkDir}/app-release-R.txt"
+    baseApkResourceMapping = "${bakPath}/${baseApkDir}/${buglyResFileName}"
 
     // 构建基准包和补丁包都要指定不同的tinkerId，并且必须保证唯一性
     tinkerId = "${buglyPatchId}"

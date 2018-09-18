@@ -16,37 +16,62 @@ ext {
     //此次补丁id, 需要和生成基准包时的id唯一
     bugly_patch_id = "bugly-1.13.6-patch"
 
+    //混淆对应的mapping文件名, 默认在: app/build/outputs/mapping/release/mapping.txt
+    bugly_mapping_file_name = "app-release-mapping.txt"
+    //资源id保存的文件名, 默认在: app/build/intermediates/symbols/release/R.txt
+    bugly_res_file_name = "app-debug-R.txt"
+
     //加固专用
     bugly_protected = false
 }
 
 /**
- *
- *
- *
- *
- *
- *
- *
- *
+ * *                                                   #
+ * #                                                   #
+ * #                       _oo0oo_                     #
+ * #                      o8888888o                    #
+ * #                      88" . "88                    #
+ * #                      (| -_- |)                    #
+ * #                      0\  =  /0                    #
+ * #                    ___/`---'\___                  #
+ * #                  .' \\|     |# '.                 #
+ * #                 / \\|||  :  |||# \                #
+ * #                / _||||| -:- |||||- \              #
+ * #               |   | \\\  -  #/ |   |              #
+ * #               | \_|  ''\---/''  |_/ |             #
+ * #               \  .-\__  '-'  ___/-. /             #
+ * #             ___'. .'  /--.--\  `. .'___           #
+ * #          ."" '<  `.___\_<|>_/___.' >' "".         #
+ * #         | | :  `- \`.;`\ _ /`;.`/ - ` : | |       #
+ * #         \  \ `_.   \_ __\ /__ _/   .-` /  /       #
+ * #     =====`-.____`.___ \_____/___.-`___.-'=====    #
+ * #                       `=---='                     #
+ * #     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~   #
+ * #                                                   #
+ * #               佛祖保佑         补丁生效             #
+ * #                                                   #
  * 已下内容酌情修改
  * */
 def isRootProject = project == project.getRootProject()
+def isLibrary = project.getPlugins().hasPlugin("com.android.library")
+def isApp = project.getPlugins().hasPlugin("com.android.application")
 
 def app_module_name = ext.app_module_name
 if (ext.app_module_name == "" && !isRootProject) {
     app_module_name = project.getName()
 }
 
-def patch_path = rootDir.getAbsolutePath() + "/" + app_module_name + "/build/outputs/patch/release"
-def patch_file = patch_path + "/patch_signed_7zip.apk"
+def patch_path = rootDir.getAbsolutePath() + "/" + app_module_name + "/build/outputs/patch"
+def patch_file_name = "patch_signed_7zip.apk"
 
 def bugly_apk_path = rootDir.getAbsolutePath() + "/" + ext.bugly_back_path
 def bugly_patch_id = ext.bugly_patch_id
 def bugly_patch_apk_dir = ext.bugly_patch_apk_dir
 
 //清理之前的补丁包, 和多余的APK备份
-clearPatch(patch_path, bugly_apk_path)
+clearPatch(patch_path + "/debug")
+clearPatch(patch_path + "/release")
+deleteApkFolder(bugly_apk_path, true)
 
 //println '工程:' + project.getDisplayName()
 //println '输出目录:' + buildDir
@@ -58,8 +83,10 @@ if (isRootProject) {
             classpath "com.tencent.bugly:tinker-support:$tinkerSupportVersion"
         }
     }
-} else {
-    apply from: '../bugly/tinker-support.gradle'
+} else if (isApp || isLibrary) {
+    if (isApp) {
+        apply from: '../bugly/tinker-support.gradle'
+    }
     android {
         defaultConfig {
             ndk {
@@ -78,6 +105,7 @@ if (isRootProject) {
         implementation "com.tencent.bugly:nativecrashreport:$buglyNativeVersion"
         //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
     }
+    if (isApp) {
 //    tasks.each {
 //        println "each:" + it.name
 //        println '....end'
@@ -86,19 +114,23 @@ if (isRootProject) {
 //        it.doLast {
 //        }
 //    }
-    tasks.whenTaskAdded {
-        if (it.name == 'assembleRelease') {
-            it.doLast {
-            }
-        } else if (it.name == 'buildTinkerPatchRelease') {
-            it.doFirst {
-                println "开始编译补丁."
-            }
-            it.doLast {
-                //createFileInLastFolder(bugly_apk_path, bugly_patch_id)
-                copyFile(patch_file, bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id)
-                copyFile(patch_file, bugly_apk_path, bugly_patch_id)
-                createFile(bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id + ".bugly")
+        tasks.whenTaskAdded {
+            if (it.name == 'assembleRelease') {
+                it.doLast {
+                }
+            } else if (it.name.startsWith("buildTinkerPatch")) {
+                def type = it.name.substring("buildTinkerPatch".length())
+                it.doFirst {
+                    println "开始编译补丁->" + it.name + ' type:' + type
+                }
+                it.doLast {
+                    /**收集补丁文件*/
+                    def debugPath = patch_path + "/" + type + "/" + patch_file_name
+                    copyFile(debugPath, bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id)
+                    copyFile(debugPath, bugly_apk_path, bugly_patch_id)
+
+                    createFile(bugly_apk_path + "/" + bugly_patch_apk_dir, bugly_patch_id + ".bugly")
+                }
             }
         }
     }
@@ -107,7 +139,7 @@ if (isRootProject) {
 /**
  * 删除之前补丁包
  * */
-def clearPatch(String patchPath, String apkPath) {
+def clearPatch(String patchPath) {
     File patchDir = new File(patchPath)
     if (patchDir != null && patchDir.isDirectory()) {
         def files = patchDir.listFiles()
@@ -118,17 +150,19 @@ def clearPatch(String patchPath, String apkPath) {
             }
         }
     }
-    deleteApkFolder(apkPath, true)
 }
 
 /**
- * 收集补丁包
+ * 复制文件
  * */
 def copyFile(String from, String toPath, String suffix) {
     InputStream input = null
     OutputStream output = null
     try {
         File source = new File(from)
+        if (!source.exists()) {
+            return
+        }
         String rawName = source.getName().substring(0, source.getName().indexOf('.'))
         File dest = new File(toPath + "/" + rawName + "_" + suffix + ".apk")
         println '复制文件:' + source.getAbsolutePath() + " -> " + dest.getAbsolutePath()
@@ -141,8 +175,12 @@ def copyFile(String from, String toPath, String suffix) {
             output.write(buf, 0, bytesRead)
         }
     } finally {
-        input.close()
-        output.close()
+        if (input != null) {
+            input.close()
+        }
+        if (output != null) {
+            output.close()
+        }
     }
 }
 
@@ -158,6 +196,7 @@ def createFileInLastFolder(String path, String fileName) {
     }
 }
 
+/**新建文件*/
 static def createFile(String folder, String fileName) {
     File folderFile = new File(folder)
     if (!folderFile.exists()) {
@@ -169,6 +208,7 @@ static def createFile(String folder, String fileName) {
     }
 }
 
+/**清理文件夹*/
 def deleteApkFolder(String path, boolean isRootPath) {
     File folder = new File(path)
     if (folder != null && folder.isDirectory()) {
@@ -193,6 +233,7 @@ def deleteApkFolder(String path, boolean isRootPath) {
     }
 }
 
+/**文件夹是否需要忽略清理*/
 def ignoreFolder(String path) {
     File folder = new File(path)
     if (folder != null && folder.isDirectory()) {

@@ -17,10 +17,14 @@ Bugly热更新接入脚本
 
 #### 2. 在工程根目录下的`build.gradle`配置
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/2.png)
+`apply from: './bugly/bugly_config.gradle'`
 
 
-#### 3. 在模块目录下的`build.gradle`配置
+#### 3. 在模块application目录下的`build.gradle`配置
+支持同时在`application`和`library`中设置, 脚本自动区分.
+
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/3.png)
+`apply from: '../bugly/bugly_config.gradle'`
 
 到此脚本配置完成, 打包时可以生成带有`tinkerId`的基准包和`app-release-R.txt`和`app-release-mapping.txt`文件(如果有)
 
@@ -157,3 +161,97 @@ com.angcyo.buglydemo I/Tinker.TinkerResultService: tinker wait screen to restart
 com.angcyo.buglydemo D/Tinker.DefaultAppLike: onTrimMemory level:5
 ```
 
+
+### Bugly SDK 简要接入说明
+
+#### enableProxyApplication = false 的情况
+#### 1.自定义Application
+```
+public class BuglyApplication extends TinkerApplication {
+    public BuglyApplication() {
+        super(ShareConstants.TINKER_ENABLE_ALL,
+        "com.angcyo.ApplicationLike",//真正自己自定义的Application
+        "com.tencent.tinker.loader.TinkerLoader", 
+        false);
+    }
+}
+
+//参数解析
+参数1：tinkerFlags 表示Tinker支持的类型 dex only、library only or all suuport，default: TINKER_ENABLE_ALL
+参数2：delegateClassName Application代理类 这里填写你自定义的ApplicationLike
+参数3：loaderClassName Tinker的加载器，使用默认即可
+参数4：tinkerLoadVerifyFlag 加载dex或者lib是否验证md5，默认为false
+```
+
+
+#### 2.自定义ApplicationLike
+```
+public class SampleApplicationLike extends DefaultApplicationLike {
+
+    public static final String TAG = "Tinker.SampleApplicationLike";
+
+    public SampleApplicationLike(Application application, int tinkerFlags,
+            boolean tinkerLoadVerifyFlag, long applicationStartElapsedTime,
+            long applicationStartMillisTime, Intent tinkerResultIntent) {
+        super(application, tinkerFlags, tinkerLoadVerifyFlag, applicationStartElapsedTime, applicationStartMillisTime, tinkerResultIntent);
+    }
+
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // 这里实现SDK初始化，appId替换成你的在Bugly平台申请的appId
+        // 调试时，将第三个参数改为true
+        Bugly.init(getApplication(), "xxx", false);
+    }
+
+
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Override
+    public void onBaseContextAttached(Context base) {
+        super.onBaseContextAttached(base);
+        // you must install multiDex whatever tinker is installed!
+        MultiDex.install(base);
+        
+        //开发设备
+        Bugly.setIsDevelopmentDevice(base, !"release".equalsIgnoreCase(BuildConfig.BUILD_TYPE));
+        
+        // 安装tinker
+        // TinkerManager.installTinker(this); 替换成下面Bugly提供的方法
+        Beta.installTinker(this);
+    }
+
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    public void registerActivityLifecycleCallback(Application.ActivityLifecycleCallbacks callbacks) {
+        getApplication().registerActivityLifecycleCallbacks(callbacks);
+    }
+
+}
+```
+
+#### enableProxyApplication = true 的情况
+```
+public class MyApplication extends Application {
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        // 这里实现SDK初始化，appId替换成你的在Bugly平台申请的appId
+        // 调试时，将第三个参数改为true
+        Bugly.init(this, "900029763", false);
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        // you must install multiDex whatever tinker is installed!
+        MultiDex.install(base);
+
+
+        // 安装tinker
+        Beta.installTinker();
+    }
+
+}
+
+```
