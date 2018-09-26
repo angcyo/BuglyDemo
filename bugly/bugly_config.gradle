@@ -274,8 +274,8 @@ def ignoreFolder(String path) {
 
 /**读取初始化配置*/
 def initConfig(String buglyApkPath) {
-    println buglyApkPath
-    println bugly_patch_apk_dir
+    //println buglyApkPath
+    //println bugly_patch_apk_dir
     def patchPath = buglyApkPath + "/" + bugly_patch_apk_dir
     //println '111'
     //println patchPath
