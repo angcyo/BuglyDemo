@@ -10,19 +10,20 @@ ext {
 
     //基准包备份目录, 相对于 root project
     bugly_back_path = "buglyApk"
+
     //打补丁的基准包目录名, 相对于 bugly_back_path
     bugly_patch_apk_dir = "app-0918-10-36-59"
-    bugly_patch_apk_name = "App_20180918_V2.0.2_release.apk"
     //此次补丁id, 需要和生成基准包时的id唯一
-    bugly_patch_id = "bugly-1.13.6-patch"
-
-    //混淆对应的mapping文件名, 默认在: app/build/outputs/mapping/release/mapping.txt
-    bugly_mapping_file_name = "app-release-mapping.txt"
-    //资源id保存的文件名, 默认在: app/build/intermediates/symbols/release/R.txt
-    bugly_res_file_name = "app-debug-R.txt"
-
-    //加固专用
+    bugly_patch_id = "bugly-1.13.7-patch"
+    //加固专用(如果基准包需要加固, 请设置为true, 否则补丁不会生效)
     bugly_protected = false
+
+    //以下变量,会自动获取,你也可以强制指定.
+    bugly_patch_apk_name = "" //App_20180918_V2.0.2_release.apk
+    //混淆对应的mapping文件名, 默认在: app/build/outputs/mapping/release/mapping.txt
+    bugly_mapping_file_name = "" //app-release-mapping.txt
+    //资源id保存的文件名, 默认在: app/build/intermediates/symbols/release/R.txt
+    bugly_res_file_name = "" //app-release-R.txt
 }
 
 /**
@@ -68,13 +69,14 @@ def bugly_apk_path = rootDir.getAbsolutePath() + "/" + ext.bugly_back_path
 def bugly_patch_id = ext.bugly_patch_id
 def bugly_patch_apk_dir = ext.bugly_patch_apk_dir
 
-//清理之前的补丁包, 和多余的APK备份
-clearPatch(patch_path + "/debug")
-clearPatch(patch_path + "/release")
 deleteApkFolder(bugly_apk_path, true)
+
+//println "1:" + ext.bugly_patch_apk_dir
 
 //println '工程:' + project.getDisplayName()
 //println '输出目录:' + buildDir
+
+def buildType = ""
 
 //root project 和 app project 脚本自动区分执行
 if (isRootProject) {
@@ -85,6 +87,7 @@ if (isRootProject) {
     }
 } else if (isApp || isLibrary) {
     if (isApp) {
+        initConfig(bugly_apk_path)
         apply from: '../bugly/tinker-support.gradle'
     }
     android {
@@ -106,22 +109,36 @@ if (isRootProject) {
         //其中latest.release指代最新版本号，也可以指定明确的版本号，例如2.2.0
     }
     if (isApp) {
-//    tasks.each {
-//        println "each:" + it.name
-//        println '....end'
-//    }
+//        tasks.each {
+//            println "each task:" + it.name
+//            println '....end'
+//        }
 //    tasks.getByName("assembleRelease") {
 //        it.doLast {
 //        }
 //    }
         tasks.whenTaskAdded {
-            if (it.name == 'assembleRelease') {
-                it.doLast {
+//            println "add task:" + it.name
+
+            if (it.name.startsWith("assemble")) {
+                def type = it.name.substring("assemble".length())
+                it.doFirst {
+                    if (type != null && type.length() > 0) {
+                        buildType = type
+
+                        //清理之前的补丁包, 和多余的APK备份
+                        def clearPath = patch_path + "/" + type
+                        println "清理旧补丁->" + clearPath
+                        clearPatch(clearPath)
+                        //clearPatch(patch_path + "/release")
+                    }
                 }
             } else if (it.name.startsWith("buildTinkerPatch")) {
                 def type = it.name.substring("buildTinkerPatch".length())
                 it.doFirst {
-                    println "开始编译补丁->" + it.name + ' type:' + type
+                    println "开始编译补丁->" + it.name + ' type:' + type + ' buildType:' + buildType
+                    //println "2:" + bugly_patch_apk_dir
+                    //1 / 0
                 }
                 it.doLast {
                     /**收集补丁文件*/
@@ -253,6 +270,43 @@ def ignoreFolder(String path) {
         }
     }
     return false
+}
+
+/**读取初始化配置*/
+def initConfig(String buglyApkPath) {
+    println buglyApkPath
+    println bugly_patch_apk_dir
+    def patchPath = buglyApkPath + "/" + bugly_patch_apk_dir
+    //println '111'
+    //println patchPath
+    def folder = new File(patchPath)
+    if (folder.isDirectory()) {
+        def files = folder.listFiles()
+        if (files != null) {
+            for (File f : files) {
+                if (f.isFile()) {
+                    def name = f.getName()
+                    println name
+                    if (name.endsWith('R.txt')) {
+                        //R资源变量赋值
+                        if (ext.bugly_res_file_name == "") {
+                            ext.bugly_res_file_name = name
+                        }
+                    } else if (name.endsWith('mapping.txt')) {
+                        //mapping变量赋值
+                        if (ext.bugly_mapping_file_name == "") {
+                            ext.bugly_mapping_file_name = name
+                        }
+                    } else if (name.endsWith(".apk") && !name.contains('patch')) {
+                        //基准包变量赋值
+                        if (ext.bugly_patch_apk_name == "") {
+                            ext.bugly_patch_apk_name = name
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*

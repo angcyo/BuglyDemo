@@ -16,8 +16,12 @@ def buglyProtected = ext.bugly_protected
 def buglyMappingFileName = ext.bugly_mapping_file_name
 def buglyResFileName = ext.bugly_res_file_name
 
-//println bakPath
-//println buglyProtected
+//println '3:' + baseApkDir
+//println '3:' + baseApkName
+//println '3:' + buglyPatchId
+//println '3:' + buglyProtected
+//println '3:' + buglyMappingFileName
+//println '3:' + buglyResFileName
 //1 / 0
 
 /**
