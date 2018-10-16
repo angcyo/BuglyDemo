@@ -17,6 +17,7 @@ Bugly热更新接入脚本
 
 #### 2. 在工程根目录下的`build.gradle`配置
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/2.png)
+
 `apply from: './bugly/bugly_config.gradle'`
 
 
@@ -24,6 +25,7 @@ Bugly热更新接入脚本
 支持同时在`application`和`library`中设置, 脚本自动区分.
 
 ![](https://raw.githubusercontent.com/angcyo/BuglyDemo/master/png/3.png)
+
 `apply from: '../bugly/bugly_config.gradle'`
 
 到此脚本配置完成, 打包时可以生成带有`tinkerId`的基准包和`app-release-R.txt`和`app-release-mapping.txt`文件(如果有)
