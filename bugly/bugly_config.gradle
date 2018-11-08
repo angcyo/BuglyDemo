@@ -260,13 +260,17 @@ def ignoreFolder(String path) {
         def files = folder.listFiles()
         if (files != null) {
             def contain = false
+            def noDebug = true
             for (File f : files) {
                 contain = f.getName().contains(".bugly")
+                if (noDebug) {
+                    noDebug = !f.getName().contains("debug")
+                }
                 if (contain) {
                     break
                 }
             }
-            return contain
+            return contain || noDebug
         }
     }
     return false
